@@ -1,12 +1,12 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp <$> *> <* or)
+          any string regexp map map2 map3 *> <* or)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
           (prefix (rnrs) rnrs:)
-          (except (rnrs) string or)
+          (except (rnrs) string map or)
           (oop goops)
           (except (srfi srfi-13) string))
 
@@ -55,11 +55,34 @@
             (parser-return (match:substring matched) (match:suffix matched))
             (parser-fail)))))
 
-  (define (<$> proc parser)
+  (define (map proc parser)
     (lambda (context)
       (let ([result (parser context)])
         (if (context-succeed? result)
             (parser-return (proc (context-value result)) (context-string result))
+            (parser-fail)))))
+
+  (define (map2 proc parser1 parser2)
+    (lambda (context)
+      (let ([result1 (parser1 context)])
+        (if (context-succeed? result1)
+            (let ([result2 (parser2 result1)])
+              (parser-return (proc (context-value result1) (context-value result2))
+                             (context-string result2)))
+            (parser-fail)))))
+
+  (define (map3 proc parser1 parser2 parser3)
+    (lambda (context)
+      (let ([result1 (parser1 context)])
+        (if (context-succeed? result1)
+            (let ([result2 (parser2 result1)])
+              (if (context-succeed? result2)
+                  (let ([result3 (parser3 result2)])
+                    (parser-return (proc (context-value result1)
+                                         (context-value result2)
+                                         (context-value result3))
+                                   (context-string result3)))
+                  (parser-fail)))
             (parser-fail)))))
 
   (define (or left . rights)
