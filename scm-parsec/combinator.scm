@@ -1,14 +1,14 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          -string any regexp)
+          any string regexp <$> *> <*)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
           (prefix (rnrs) rnrs:)
-          (rnrs)
+          (except (rnrs) string)
           (oop goops)
-          (srfi srfi-13))
+          (except (srfi srfi-13) string))
 
   (define (parser-run parser string)
     (let ([context (parser (make <parser-context> #:suceed #t #:value #f #:string string))])
@@ -41,7 +41,7 @@
     (parser-return (substring (context-string context) 0 1)
                    (substring (context-string context) 1)))
 
-  (define (-string str)
+  (define (string str)
     (lambda (context)
       (let ([matched-len (string-prefix-length str (context-string context))])
         (if (= matched-len (string-length str))
@@ -53,4 +53,28 @@
       (let ([matched (string-match (string-append "^" reg) (context-string context))])
         (if matched
             (parser-return (match:substring matched) (match:suffix matched))
+            (parser-fail)))))
+
+  (define (<$> proc parser)
+    (lambda (context)
+      (let ([result (parser context)])
+        (if (context-succeed? result)
+            (parser-return (proc (context-value result)) (context-string result))
+            (parser-fail)))))
+
+  (define (*> left right)
+    (lambda (context)
+      (let ([result (left context)])
+        (if (context-succeed? result)
+            (right result)
+            (parser-fail)))))
+
+  (define (<* left right)
+    (lambda (context)
+      (let ([left-result (left context)])
+        (if (context-succeed? left-result)
+            (let ([right-result (right left-result)])
+              (if (context-succeed? right-result)
+                  (parser-return (context-value left-result) (context-string right-result))
+                  (parser-fail)))
             (parser-fail))))))
