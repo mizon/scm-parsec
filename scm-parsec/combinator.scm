@@ -1,7 +1,7 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp sequence map map2 map3 *> <* or)
+          any string regexp sequence map *> <* or)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
@@ -55,34 +55,11 @@
             (parser-return (match:substring matched) (match:suffix matched))
             (parser-fail)))))
 
-  (define (map proc parser)
+  (define (map proc . parsers)
     (lambda (context)
-      (let ([result (parser context)])
+      (let ([result ((apply sequence parsers) context)])
         (if (context-succeed? result)
-            (parser-return (proc (context-value result)) (context-string result))
-            (parser-fail)))))
-
-  (define (map2 proc parser1 parser2)
-    (lambda (context)
-      (let ([result1 (parser1 context)])
-        (if (context-succeed? result1)
-            (let ([result2 (parser2 result1)])
-              (parser-return (proc (context-value result1) (context-value result2))
-                             (context-string result2)))
-            (parser-fail)))))
-
-  (define (map3 proc parser1 parser2 parser3)
-    (lambda (context)
-      (let ([result1 (parser1 context)])
-        (if (context-succeed? result1)
-            (let ([result2 (parser2 result1)])
-              (if (context-succeed? result2)
-                  (let ([result3 (parser3 result2)])
-                    (parser-return (proc (context-value result1)
-                                         (context-value result2)
-                                         (context-value result3))
-                                   (context-string result3)))
-                  (parser-fail)))
+            (parser-return (apply proc (context-value result)) (context-string result))
             (parser-fail)))))
 
   (define (sequence . parsers)
