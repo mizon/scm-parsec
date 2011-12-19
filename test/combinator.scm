@@ -13,4 +13,7 @@
   (test-equal "success string parser" "hogefuga" (parsec:parser-run string-parser "hogefuga"))
   (test-equal "fail string parser" #f (parsec:parser-accept? string-parser "noga")))
 
+(let ([regexp-parser (parsec:regexp "number: [0-9][0-9][0-9]")])
+  (test-equal "success regexp parser" "number: 123" (parsec:parser-run regexp-parser "number: 123")))
+
 (test-end)

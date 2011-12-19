@@ -3,14 +3,18 @@
           context-value context-string
           -string any regexp)
 
-  (import (only (rnrs) define lambda let if =)
+  (import (ice-9 regex)
+          (only (rnrs) define lambda let if =)
           (prefix (rnrs) rnrs:)
           (rnrs)
           (oop goops)
           (srfi srfi-13))
 
   (define (parser-run parser string)
-    (context-value (parser (make <parser-context> #:suceed #t #:value #f #:string string))))
+    (let ([context (parser (make <parser-context> #:suceed #t #:value #f #:string string))])
+      (if (context-succeed? context)
+          (context-value context)
+          #f)))
 
   (define (parser-accept? parser string)
     (context-succeed? (parser (make <parser-context> #:suceed #t #:value #f #:string string))))
@@ -46,7 +50,7 @@
 
   (define (regexp reg)
     (lambda (context)
-      (let ([matched (string-match (string-append "\\A" reg) (context-string context))])
+      (let ([matched (string-match (string-append "^" reg) (context-string context))])
         (if matched
             (parser-return (match:substring matched) (match:suffix matched))
             (parser-fail))))))
