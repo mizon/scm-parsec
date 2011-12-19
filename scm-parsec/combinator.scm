@@ -1,12 +1,12 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp <$> *> <*)
+          any string regexp <$> *> <* or)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
           (prefix (rnrs) rnrs:)
-          (except (rnrs) string)
+          (except (rnrs) string or)
           (oop goops)
           (except (srfi srfi-13) string))
 
@@ -61,6 +61,13 @@
         (if (context-succeed? result)
             (parser-return (proc (context-value result)) (context-string result))
             (parser-fail)))))
+
+  (define (or left right)
+    (lambda (context)
+      (let ([result (left context)])
+        (if (context-succeed? result)
+            result
+            (right context)))))
 
   (define (*> left right)
     (lambda (context)

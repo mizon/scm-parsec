@@ -27,4 +27,8 @@
 (let ([map-parser (parsec:<$> rnrs:string-upcase (parsec:string "hoge"))])
   (test-equal "success map-parser" "HOGE" (parsec:parser-run map-parser "hoge")))
 
+(let ([or-parser (parsec:or (parsec:string "hoge") (parsec:string "fuga"))])
+  (test-equal "success or left" "hoge" (parsec:parser-run or-parser "hoge"))
+  (test-equal "success or right" "fuga" (parsec:parser-run or-parser "fuga")))
+
 (test-end)
