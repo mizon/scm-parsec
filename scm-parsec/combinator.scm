@@ -1,7 +1,7 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp map map2 map3 *> <* or)
+          any string regexp sequence map map2 map3 *> <* or)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
@@ -84,6 +84,18 @@
                                    (context-string result3)))
                   (parser-fail)))
             (parser-fail)))))
+
+  (define (sequence . parsers)
+    (lambda (context)
+      (let loop ([values '()]
+                 [context context]
+                 [parsers parsers])
+        (if (null? parsers)
+            (parser-return (reverse values) (context-string context))
+            (let ([result ((car parsers) context)])
+              (if (context-succeed? result)
+                  (loop (cons (context-value result) values) result (cdr parsers))
+                  (parser-fail)))))))
 
   (define (or left . rights)
     (lambda (context)

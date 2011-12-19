@@ -39,4 +39,7 @@
   (test-equal "success or middle" "fuga" (parsec:parser-run or-parser "fuga"))
   (test-equal "success or right" "nuga" (parsec:parser-run or-parser "nuga")))
 
+(let ([sequence-parser (parsec:sequence (parsec:string "hoge") (parsec:string "hoge"))])
+  (test-equal "success sequence parser" '("hoge" "hoge") (parsec:parser-run sequence-parser "hogehoge")))
+
 (test-end)
