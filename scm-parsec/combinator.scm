@@ -62,12 +62,14 @@
             (parser-return (proc (context-value result)) (context-string result))
             (parser-fail)))))
 
-  (define (or left right)
+  (define (or left . rights)
     (lambda (context)
-      (let ([result (left context)])
-        (if (context-succeed? result)
-            result
-            (right context)))))
+      (let ([left-result (left context)])
+        (if (context-succeed? left-result)
+            left-result
+            (if (null? rights)
+                (parser-fail)
+                ((apply or rights) context))))))
 
   (define (*> left right)
     (lambda (context)
