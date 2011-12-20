@@ -42,4 +42,12 @@
 (let ([sequence-parser (parsec:sequence (parsec:string "hoge") (parsec:string "hoge"))])
   (test-equal "success sequence parser" '("hoge" "hoge") (parsec:parser-run sequence-parser "hogehoge")))
 
+(let ([many-parser (parsec:many (parsec:string "hoge"))])
+  (test-equal "success parse wrong string with many parser"
+              '()
+              (parsec:parser-run many-parser "gggggg"))
+  (test-equal "success many parser"
+              (list "hoge" "hoge" "hoge" "hoge")
+              (parsec:parser-run many-parser "hogehogehogehoge")))
+
 (test-end)
