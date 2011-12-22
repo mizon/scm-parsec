@@ -77,14 +77,14 @@
                   (loop (cons (context-value result) values) result (cdr parsers))
                   (parser-fail)))))))
 
-  (define (or left . rights)
+  (define (or parser . parsers)
     (lambda (context)
-      (let ([left-result (left context)])
-        (if (context-succeed? left-result)
-            left-result
-            (if (null? rights)
+      (let ([result (parser context)])
+        (if (context-succeed? result)
+            result
+            (if (null? parsers)
                 (parser-fail)
-                ((apply or rights) context))))))
+                ((apply or parsers) context))))))
 
   (define (*> . parsers)
     (apply map (cons (lambda (. values) (last values)) parsers)))
