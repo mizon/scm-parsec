@@ -1,12 +1,13 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp sequence map *> <* or many)
+          any string regexp sequence map *> <* or many not
+          end)
 
   (import (ice-9 regex)
           (only (rnrs) define lambda let if =)
           (prefix (rnrs) rnrs:)
-          (except (rnrs) string map or)
+          (except (rnrs) string map or not)
           (oop goops)
           (except (srfi srfi-1) map)
           (srfi srfi-26)
@@ -34,7 +35,7 @@
     (make <parser-context> #:succeed #t #:string string #:value value))
 
   (define (parser-fail)
-    (make <parser-context> #:succeed #f))
+    (make <parser-context> #:succeed #f #:string "" #:value #f))
 
 
   ;; Combinators.
@@ -91,6 +92,13 @@
   (define (<* . parsers)
     (apply map (cons (lambda (. values) (first values)) parsers)))
 
+  (define (not parser)
+    (lambda (context)
+      (let ([result (parser context)])
+        (if (context-succeed? result)
+            (parser-fail)
+            (parser-return #f (context-string context))))))
+
   (define (many parser)
     (lambda (context)
       (let loop ([old-result context]
@@ -99,4 +107,10 @@
           (if (context-succeed? result)
               (loop result (cons result results))
               (parser-return (rnrs:map context-value (reverse results))
-                             (context-string old-result))))))))
+                             (context-string old-result)))))))
+
+  (define (end)
+    (lambda (context)
+      (if (string=? (context-string context) "")
+          (parser-return #f "")
+          (parser-fail)))))

@@ -9,6 +9,11 @@
 (let ([context (make parsec:<parser-context> #:succeed #t #:value "fuga" #:string "hogefuga")])
   (test-assert "context-succeed?" (parsec:context-succeed? context)))
 
+(let ([end-parser (parsec:end)])
+  (test-assert "accept end parser" (parsec:parser-accept? end-parser ""))
+  (test-equal "end parser returns empty #f" #f (parsec:parser-run end-parser ""))
+  (test-assert "not accept end parser" (not (parsec:parser-accept? end-parser "hoge"))))
+
 (let ([string-parser (parsec:string "hogefuga")])
   (display parsec:string)
   (test-assert "accept string parser" (parsec:parser-accept? string-parser "hogefuga"))
@@ -49,5 +54,10 @@
   (test-equal "success many parser"
               (list "hoge" "hoge" "hoge" "hoge")
               (parsec:parser-run many-parser "hogehogehogehoge")))
+
+(let ([not-parser (parsec:not (parsec:string "hoge"))])
+  (test-assert "fail not parser" (not (parsec:parser-accept? not-parser "hogefuga")))
+  (test-assert "success not-parser" (parsec:parser-accept? not-parser "fuga"))
+  (test-equal "not-parser result" #f (parsec:parser-run not-parser "hogefuga")))
 
 (test-end)
