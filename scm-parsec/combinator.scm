@@ -1,7 +1,7 @@
 (library (scm-parsec combinator)
   (export parser-run parser-accept? <parser-context> context-succeed?
           context-value context-string
-          any string regexp sequence map *> <* or many not
+          any string regexp sequence map *> <* or many many1 not
           end)
 
   (import (ice-9 regex)
@@ -108,6 +108,11 @@
               (loop result (cons result results))
               (parser-return (rnrs:map context-value (reverse results))
                              (context-string old-result)))))))
+
+  (define (many1 parser)
+    (map (lambda (result results)
+           (cons result results))
+         parser (many parser)))
 
   (define (end)
     (lambda (context)
